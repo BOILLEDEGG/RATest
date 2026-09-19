@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regenerative Agro-Telemetry & Spectral Vision</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #0b150e; color: #e1ede4; font-family: system-ui, sans-serif; }
+    .card { background: #132419; border: 1px solid #234430; border-radius: 0.75rem; }
+  </style>
+</head>
+<body class="p-3 md:p-6 max-w-6xl mx-auto relative overflow-x-hidden min-h-screen">
+
+  <!-- TOP HEADER WITH 3-BAR HAMBURGER -->
+  <header class="flex justify-between items-center pb-4 mb-6 border-b border-emerald-900">
+    <div>
+      <h1 class="text-xl md:text-2xl font-bold text-emerald-400">Regenerative Agro-Telemetry Node</h1>
+      <p class="text-xs text-emerald-200/70">Edge Sensing & Canopy Vision</p>
+    </div>
+    
+    <!-- 3-BAR MENU BUTTON -->
+    <button onclick="toggleSidebar(true)" class="p-2 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-300 hover:bg-emerald-900 transition focus:outline-none">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </header>
+
+  <!-- MAIN TELEMETRY DASHBOARD -->
+  <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="card p-4">
+      <span class="text-xs text-emerald-300/80 font-semibold">Q1: Normal Soil</span>
+      <div id="val-q1" class="text-2xl font-bold text-emerald-400 my-1">-- %</div>
+      <span class="text-[10px] text-gray-400">Control Baseline</span>
+    </div>
+    <div class="card p-4 border-emerald-500/50">
+      <span class="text-xs text-emerald-300/80 font-semibold">Q2: Vermicompost</span>
+      <div id="val-q2" class="text-2xl font-bold text-emerald-300 my-1">-- %</div>
+      <span class="text-[10px] text-emerald-400">Regenerative Standard</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-xs text-emerald-300/80 font-semibold">Q3: Plant Compost</span>
+      <div id="val-q3" class="text-2xl font-bold text-emerald-400 my-1">-- %</div>
+      <span class="text-[10px] text-gray-400">Vegetative Carbon</span>
+    </div>
+    <div class="card p-4">
+      <span class="text-xs text-emerald-300/80 font-semibold">Q4: Animal Compost</span>
+      <div id="val-q4" class="text-2xl font-bold text-emerald-400 my-1">-- %</div>
+      <span class="text-[10px] text-gray-400">Organic Matrix</span>
+    </div>
+  </section>
+
+  <!-- TIME-SERIES DEPLETION CHART -->
+  <section class="card p-4 md:p-6 mb-6">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="text-sm font-semibold text-emerald-300">Soil Moisture Depletion Kinetics (&theta;(t) Decay Curves)</h2>
+      <button onclick="fetchThingSpeakData()" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-600 text-xs text-white rounded-md transition">Sync Telemetry</button>
+    </div>
+    <div class="h-64"><canvas id="decayChart"></canvas></div>
+  </section>
+
+  <!-- SLIDE-OVER SIDEBAR (DRAWER) -->
+  <div id="sideDrawer" class="fixed inset-y-0 right-0 w-full md:w-96 bg-gray-950 border-l border-emerald-900 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col p-5 overflow-y-auto">
+    
+    <!-- Drawer Header -->
+    <div class="flex justify-between items-center pb-3 mb-4 border-b border-gray-800">
+      <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider">Field Vision Tools</h2>
+      <button onclick="toggleSidebar(false)" class="text-gray-400 hover:text-white text-2xl font-bold p-1 leading-none">&times;</button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-gray-800 mb-4">
+      <button id="tabBtn1" onclick="switchTab(1)" class="flex-1 py-2 text-xs font-semibold text-emerald-400 border-b-2 border-emerald-400">Tagged Photo</button>
+      <button id="tabBtn2" onclick="switchTab(2)" class="flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200">Green Vision</button>
+    </div>
+
+    <!-- TAB 1: TAGGED FIELD PHOTO -->
+    <div id="tabContent1" class="space-y-4">
+      <p class="text-xs text-gray-400">Capture field photos stamped with device GPS coordinates and local timestamps for examiner reports.</p>
+      
+      <input type="file" id="tagCameraInput" accept="image/*" capture="environment" class="text-xs text-gray-300 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-emerald-700 file:text-white hover:file:bg-emerald-600 w-full cursor-pointer">
+      
+      <button onclick="acquireGPS()" class="w-full py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-xs rounded-lg text-emerald-300 transition">
+        Acquire &amp; Stamp GPS
+      </button>
+      <div id="tagGpsInfo" class="text-[11px] font-mono text-gray-400 bg-gray-900 p-2 rounded border border-gray-800">GPS: Location not acquired</div>
+
+      <img id="taggedPhotoPreview" class="w-full rounded-lg border border-gray-800 hidden object-contain max-h-60" alt="Tagged preview">
+    </div>
+
+    <!-- TAB 2: GREEN VISION (TRAY BOUNDARY ENGINE) -->
+    <div id="tabContent2" class="space-y-4 hidden">
+      <p class="text-xs text-gray-400">Measures canopy foliage strictly inside the tray boundaries, cropping out surrounding background.</p>
+      
+      <input type="file" id="visionCameraInput" accept="image/*" capture="environment" class="text-xs text-gray-300 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-emerald-700 file:text-white hover:file:bg-emerald-600 w-full cursor-pointer">
+
+      <!-- Tray Boundary Adjustment Slider -->
+      <div class="bg-gray-900 p-3 rounded-lg border border-gray-800 space-y-2">
+        <div class="flex justify-between items-center text-[11px] text-gray-300 font-semibold">
+          <span>Tray Margin Inward Crop:</span>
+          <span id="marginVal" class="text-emerald-400">10%</span>
+        </div>
+        <input type="range" id="cropMargin" min="0" max="30" value="10" class="w-full accent-emerald-500 cursor-pointer" oninput="updateCropMargin(this.value)">
+        <span class="text-[10px] text-gray-500 block">Adjust to align the green dashed box with the inner edge of your tray.</span>
+      </div>
+
+      <!-- Live Canvas Preview with Target Box -->
+      <div class="relative w-full border border-gray-800 rounded-lg overflow-hidden bg-black flex justify-center items-center">
+        <canvas id="visionCanvas" class="max-w-full object-contain"></canvas>
+      </div>
+
+      <!-- Canopy Metrics Output -->
+      <div class="bg-emerald-950/50 border border-emerald-900/80 p-3 rounded-lg text-center">
+        <span class="text-xs text-gray-400">Fractional Green Canopy Cover</span>
+        <div id="trayCanopyVal" class="text-3xl font-bold text-emerald-400 my-1">0.00 %</div>
+        <span class="text-[10px] text-emerald-300/80">Filter: G &gt; 60 &amp;&amp; G &gt; 1.15&times;R &amp;&amp; G &gt; 1.10&times;B</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- SIDEBAR DRAWER TOGGLE ---
+    function toggleSidebar(open) {
+      const drawer = document.getElementById('sideDrawer');
+      if (open) {
+        drawer.classList.remove('translate-x-full');
+      } else {
+        drawer.classList.add('translate-x-full');
+      }
+    }
+
+    // --- TAB SWITCHER ---
+    function switchTab(tabIndex) {
+      const b1 = document.getElementById('tabBtn1'), b2 = document.getElementById('tabBtn2');
+      const c1 = document.getElementById('tabContent1'), c2 = document.getElementById('tabContent2');
+      if (tabIndex === 1) {
+        b1.className = "flex-1 py-2 text-xs font-semibold text-emerald-400 border-b-2 border-emerald-400";
+        b2.className = "flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200";
+        c1.classList.remove('hidden');
+        c2.classList.add('hidden');
+      } else {
+        b2.className = "flex-1 py-2 text-xs font-semibold text-emerald-400 border-b-2 border-emerald-400";
+        b1.className = "flex-1 py-2 text-xs font-semibold text-gray-400 hover:text-gray-200";
+        c2.classList.remove('hidden');
+        c1.classList.add('hidden');
+      }
+    }
+
+    // --- TAB 1: GPS LOGGING ---
+    function acquireGPS() {
+      const out = document.getElementById('tagGpsInfo');
+      if (!navigator.geolocation) {
+        out.innerText = "Geolocation not supported on this device";
+        return;
+      }
+      out.innerText = "Connecting to satellite GPS...";
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          out.innerText = `GPS: Lat ${p.coords.latitude.toFixed(5)}, Lon ${p.coords.longitude.toFixed(5)} (±${p.coords.accuracy}m) | Stamped: ${new Date().toLocaleTimeString()}`;
+        },
+        () => { out.innerText = "Failed to acquire GPS location."; }
+      );
+    }
+
+    document.getElementById('tagCameraInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = document.getElementById('taggedPhotoPreview');
+      img.src = URL.createObjectURL(file);
+      img.classList.remove('hidden');
+    });
+
+    // --- TAB 2: GREEN VISION ENGINE (TRAY BOUNDARY MAPPING) ---
+    let activeImage = null;
+    let marginPercent = 0.10;
+
+    function updateCropMargin(val) {
+      document.getElementById('marginVal').innerText = val + "%";
+      marginPercent = parseFloat(val) / 100.0;
+      if (activeImage) processTrayVision(activeImage);
+    }
+
+    document.getElementById('visionCameraInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => {
+        activeImage = img;
+        processTrayVision(img);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    function processTrayVision(img) {
+      const canvas = document.getElementById('visionCanvas');
+      const ctx = canvas.getContext('2d');
+
+      const maxDim = 500;
+      const scale = Math.min(maxDim / img.width, maxDim / img.height, 1);
+      canvas.width = Math.floor(img.width * scale);
+      canvas.height = Math.floor(img.height * scale);
+
+      // Draw baseline photo
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Calculate inner tray region
+      const cropX = Math.floor(canvas.width * marginPercent);
+      const cropY = Math.floor(canvas.height * marginPercent);
+      const cropW = Math.floor(canvas.width * (1 - (marginPercent * 2)));
+      const cropH = Math.floor(canvas.height * (1 - (marginPercent * 2)));
+
+      // Extract pixel matrix within boundaries
+      const imgData = ctx.getImageData(cropX, cropY, cropW, cropH);
+      const d = imgData.data;
+      let greenPixels = 0;
+      let totalPixels = cropW * cropH;
+
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        // Canopeo green pixel condition
+        if (g > 60 && g > (1.15 * r) && g > (1.10 * b)) {
+          greenPixels++;
+          // Tint matching foliage pixels to neon green
+          d[i] = 74; d[i+1] = 222; d[i+2] = 128;
+        }
+      }
+
+      ctx.putImageData(imgData, cropX, cropY);
+
+      // Draw dashed visual crop boundary
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(cropX, cropY, cropW, cropH);
+
+      const coverPct = ((greenPixels / totalPixels) * 100).toFixed(2);
+      document.getElementById('trayCanopyVal').innerText = `${coverPct} %`;
+    }
+
+    // --- TELEMETRY / THINGSPEAK PIPELINE ---
+    const CHANNEL_ID = "YOUR_CHANNEL_ID";
+    const READ_KEY = "YOUR_READ_KEY"; // Leave empty if public channel
+    let chartInstance = null;
+
+    async function fetchThingSpeakData() {
+      try {
+        const url = `https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds.json?results=25${READ_KEY ? '&api_key=' + READ_KEY : ''}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const feeds = data.feeds;
+        if (!feeds || feeds.length === 0) return;
+
+        const latest = feeds[feeds.length - 1];
+        if (latest.field1) document.getElementById('val-q1').innerText = parseFloat(latest.field1).toFixed(1) + ' %';
+        if (latest.field2) document.getElementById('val-q2').innerText = parseFloat(latest.field2).toFixed(1) + ' %';
+        if (latest.field3) document.getElementById('val-q3').innerText = parseFloat(latest.field3).toFixed(1) + ' %';
+        if (latest.field4) document.getElementById('val-q4').innerText = parseFloat(latest.field4).toFixed(1) + ' %';
+
+        const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+        const q1 = feeds.map(f => parseFloat(f.field1) || null);
+        const q2 = feeds.map(f => parseFloat(f.field2) || null);
+        renderChart(labels, q1, q2);
+      } catch (e) {
+        console.log("Telemetry check ready");
+      }
+    }
+
+    function renderChart(labels, q1, q2) {
+      const ctx = document.getElementById('decayChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Q1 Normal Soil', data: q1, borderColor: '#f87171', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3 },
+            { label: 'Q2 Vermicompost', data: q2, borderColor: '#34d399', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 100, grid: { color: '#1a3324' }, ticks: { color: '#88a391' } },
+            x: { grid: { color: '#1a3324' }, ticks: { color: '#88a391' } }
+          }
+        }
+      });
+    }
+
+    fetchThingSpeakData();
+  </script>
+</body>
+</html>

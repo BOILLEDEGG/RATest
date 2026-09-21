@@ -28,8 +28,8 @@
     </button>
   </header>
 
-  <!-- MAIN TELEMETRY DASHBOARD -->
-  <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <!-- MAIN TELEMETRY DASHBOARD (SOIL MOISTURE + AMBIENT CLIMATE) -->
+  <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
     <div class="card p-4">
       <span class="text-xs text-emerald-300/80 font-semibold">Q1: Normal Soil</span>
       <div id="val-q1" class="text-2xl font-bold text-emerald-400 my-1">-- %</div>
@@ -49,6 +49,18 @@
       <span class="text-xs text-emerald-300/80 font-semibold">Q4: Animal Compost</span>
       <div id="val-q4" class="text-2xl font-bold text-emerald-400 my-1">-- %</div>
       <span class="text-[10px] text-gray-400">Organic Matrix</span>
+    </div>
+    <!-- TEMPERATURE (FIELD 5) -->
+    <div class="card p-4 border-amber-500/30">
+      <span class="text-xs text-amber-300/80 font-semibold">DHT11 Temp</span>
+      <div id="val-temp" class="text-2xl font-bold text-amber-400 my-1">-- °C</div>
+      <span class="text-[10px] text-gray-400">Ambient Air</span>
+    </div>
+    <!-- HUMIDITY (FIELD 6) -->
+    <div class="card p-4 border-sky-500/30">
+      <span class="text-xs text-sky-300/80 font-semibold">DHT11 Humidity</span>
+      <div id="val-hum" class="text-2xl font-bold text-sky-400 my-1">-- %</div>
+      <span class="text-[10px] text-gray-400">Relative Humidity</span>
     </div>
   </section>
 
@@ -241,7 +253,7 @@
 
     // --- TELEMETRY / THINGSPEAK PIPELINE ---
     const CHANNEL_ID = "3500287";
-    const READ_KEY = "8IZV3U4V7U69WIH5"; // Leave empty if public channel
+    const READ_KEY = "8IZV3U4V7U69WIH5";
     let chartInstance = null;
 
     async function fetchThingSpeakData() {
@@ -257,6 +269,9 @@
         if (latest.field2) document.getElementById('val-q2').innerText = parseFloat(latest.field2).toFixed(1) + ' %';
         if (latest.field3) document.getElementById('val-q3').innerText = parseFloat(latest.field3).toFixed(1) + ' %';
         if (latest.field4) document.getElementById('val-q4').innerText = parseFloat(latest.field4).toFixed(1) + ' %';
+        // Hydrate DHT11 Readings
+        if (latest.field5) document.getElementById('val-temp').innerText = parseFloat(latest.field5).toFixed(1) + ' °C';
+        if (latest.field6) document.getElementById('val-hum').innerText = parseFloat(latest.field6).toFixed(1) + ' %';
 
         const labels = feeds.map(f => new Date(f.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
         const q1 = feeds.map(f => parseFloat(f.field1) || null);
@@ -290,7 +305,9 @@
       });
     }
 
+    // Initial fetch and 20s refresh timer
     fetchThingSpeakData();
+    setInterval(fetchThingSpeakData, 20000);
   </script>
 </body>
 </html>
